@@ -10,3 +10,4 @@ SEA_LEVEL_CITY = "Hadleigh"
 SEA_LEVEL_URL = "https://wttr.in/{0}?format=%P"
 MQTT_TOPIC = "s3/env"
 LOCATION = "Upstairs"
+BURN_IN = 300

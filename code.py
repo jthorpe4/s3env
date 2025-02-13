@@ -1,45 +1,30 @@
+# Standard library imports
 import time
+import math
+import json
+import struct
+import os
+from collections import deque
+
+# Third-party imports
 import board
 import neopixel
 import busio
-import math
-from adafruit_bme280 import advanced as adafruit_bme280
-import adafruit_tsl2591
-import adafruit_ltr390
-import adafruit_sgp40
-import adafruit_icm20x
 import ulab.numpy as np
 import adafruit_requests
 import socketpool
 import ssl
 import wifi
 import gc
-import os
 import microcontroller
 import adafruit_sdcard
 import digitalio
-import json
-import struct
-#import socket
-from collections import deque
 import adafruit_minimqtt.adafruit_minimqtt as MQTT
-
-client_mac_addr = "%x:%x:%x:%x:%x:%x" % struct.unpack("BBBBBB",wifi.radio.mac_address)
-data = {
-    "client_mac_addr": client_mac_addr,
-    "status": "OK"
-    }
-print(json.dumps(data))
-SEA_LEVEL_CITY = os.getenv("SEA_LEVEL_CITY")
-SEA_LEVEL_URL = os.getenv("SEA_LEVEL_URL").format(SEA_LEVEL_CITY)
-MQTT_TOPIC = os.getenv("MQTT_TOPIC")
-
-HIVE_URL = os.getenv("HIVE_URL")
-HIVE_PORT = os.getenv("HIVE_PORT")
-HIVE_USERNAME = os.getenv("HIVE_USERNAME")
-HIVE_PASSWORD = os.getenv("HIVE_PASSWORD")
-
-LOCATION = os.getenv("LOCATION")
+from adafruit_bme280 import advanced as adafruit_bme280
+import adafruit_tsl2591
+import adafruit_ltr390
+import adafruit_sgp40
+import adafruit_icm20x
 
 def connected(client, userdata, flags, rc):
     print("connected")
@@ -52,12 +37,79 @@ def disconnected(client, userdata, rc):
 def message(client, topic, message):
     print(f"New message on topic {topic}: {message}")
 
-pool = socketpool.SocketPool(wifi.radio)
-#print(HIVE_URL)
-#print(HIVE_USERNAME)
-#print(HIVE_PASSWORD)
-#print(HIVE_PORT)
+def get_sea_level(requests):
+    status = "OK"
+    try:
+        response = requests.get(SEA_LEVEL_URL)
+        sea_level_pressure = round(float(response.text.strip().replace("hPa", "")),0)
+    except Exception as e:
+        sea_level_pressure = 1023.0
+        status = "FAILED"
+    data= {
+        "sea_level_pressure": sea_level_pressure,
+        "sea_level_city": SEA_LEVEL_CITY,
+        "status": status
+    }
+    print(json.dumps(data))
+    return sea_level_pressure
+
+def calculate_moving_average(values):
+    return sum(values) / len(values)
+
+def do_burn_in(bme280,sgp ):
+    burn_in_time = BURN_IN
+    data = {
+        "burn_in_time": burn_in_time,
+        "status": "STARTED"}
+    print(json.dumps(data))
+    
+    start_time = time.time()
+    curr_time = time.time()
+    cycles = 0
+    while curr_time - start_time < burn_in_time:
+        # Poll the message queue
+        mqtt_client.loop()
+        curr_time = time.time()
+        pixel[0] = COLOR
+        time.sleep(DELAY)
+        temperature =round( bme280.temperature , 1 )
+        humidity = round(bme280.relative_humidity, 0)
+        humidity_values.append(humidity)
+        temperature_values.append(temperature)
+        gas = sgp.measure_raw(temperature = temperature, relative_humidity = humidity)
+        voc= sgp.measure_index(temperature = temperature, relative_humidity = humidity)
+        pixel[0] = CLEAR
+        time.sleep(.75)
+        cycles=cycles + 1
+    data = {
+        "burn_in_time": burn_in_time,
+        "cycles":cycles,
+        "status": "OK"}
+    print(json.dumps(data))  
+
+
+
+client_mac_addr = "%x:%x:%x:%x:%x:%x" % struct.unpack("BBBBBB",wifi.radio.mac_address)
+data = {
+    "client_mac_addr": client_mac_addr,
+    "status": "OK"
+    }
+print(json.dumps(data))
+
+# Read values from settings.toml
+SEA_LEVEL_CITY = os.getenv("SEA_LEVEL_CITY")
+SEA_LEVEL_URL = os.getenv("SEA_LEVEL_URL").format(SEA_LEVEL_CITY)
+MQTT_TOPIC = os.getenv("MQTT_TOPIC")
+HIVE_URL = os.getenv("HIVE_URL")
+HIVE_PORT = os.getenv("HIVE_PORT")
+HIVE_USERNAME = os.getenv("HIVE_USERNAME")
+HIVE_PASSWORD = os.getenv("HIVE_PASSWORD")
+LOCATION = os.getenv("LOCATION")
+BURN_IN = os.getenv("BURN_IN")
+
+
 # Set up a MiniMQTT Client
+pool = socketpool.SocketPool(wifi.radio)
 mqtt_client = MQTT.MQTT(
     client_id  = client_mac_addr,
     broker= HIVE_URL,
@@ -66,16 +118,17 @@ mqtt_client = MQTT.MQTT(
     port = HIVE_PORT,
     socket_pool=pool,
     is_ssl  = True,
-    ssl_context=ssl.create_default_context(),
+    ssl_context=ssl.create_default_context()
 )
 
 mqtt_client.on_connect = connected
 mqtt_client.on_disconnect = disconnected
 mqtt_client.on_message = message
-#print("connecting")
+#try:
 mqtt_client.connect()
-#print("connected")
-
+#except (ValueError, RuntimeError) as e:
+    #mqtt_client.reconnect()
+    
 # Circular buffer with a maximum length of 10
 humidity_values = deque([],10)
 temperature_values = deque([],10)
@@ -98,24 +151,6 @@ i2c = busio.I2C(scl=scl_pin, sda=sda_pin)
 
 pixel[0] = BLUE
 time.sleep(DELAY)    
-#pool = socketpool.SocketPool(wifi.radio)
-requests = adafruit_requests.Session(pool, ssl.create_default_context())
-
-def get_sea_level():
-    status = "OK"
-    try:
-        response = requests.get(SEA_LEVEL_URL)
-        sea_level_pressure = round(float(response.text.strip().replace("hPa", "")),0)
-    except Exception as e:
-        sea_level_pressure = 1023.0
-        status = "FAILED"
-    data= {
-        "sea_level_pressure": sea_level_pressure,
-        "sea_level_city": SEA_LEVEL_CITY,
-        "status": status
-    }
-    print(json.dumps(data))
-    return sea_level_pressure
 
 data = {
     "message": "Setup sensors",
@@ -123,11 +158,13 @@ data = {
 }
 print(json.dumps(data))
 
+requests = adafruit_requests.Session(pool, ssl.create_default_context())
+
 sgp = adafruit_sgp40.SGP40(i2c, 0x59)
 bme280 = adafruit_bme280.Adafruit_BME280_I2C(i2c,  0x76)
 
 # Suggested settings for weather monitoring
-bme280.sea_level_pressure = get_sea_level()
+bme280.sea_level_pressure = get_sea_level(requests)
 
 bme280.overscan_pressure=adafruit_bme280.OVERSCAN_X1
 bme280.overscan_humidity=adafruit_bme280.OVERSCAN_X1
@@ -147,53 +184,28 @@ data = {
 }
 print(json.dumps(data)) 
    
-# Loop forever and blink the color
+
+do_burn_in(bme280,sgp)
+
 last_temperature = -1
 last_humidity = -1
 last_pressure = -1
 last_dlux = -1
 
-start_time = time.time()
-curr_time = time.time()
-burn_in_time = 300
-data = {
-    "burn_in_time": burn_in_time,
-    "status": "STARTED"}
-print(json.dumps(data))
-cycles = 0
-
-while curr_time - start_time < burn_in_time:
-    # Poll the message queue
-    mqtt_client.loop()
-    curr_time = time.time()
-    pixel[0] = COLOR
-    time.sleep(DELAY)
-    temperature =round( bme280.temperature , 1 )
-    humidity = round(bme280.relative_humidity, 0)
-    humidity_values.append(humidity)
-    temperature_values.append(temperature)
-    gas = sgp.measure_raw(temperature = temperature, relative_humidity = humidity)
-    voc= sgp.measure_index(temperature = temperature, relative_humidity = humidity)
-    pixel[0] = CLEAR
-    time.sleep(.75)
-    cycles=cycles + 1
-data = {
-    "burn_in_time": burn_in_time,
-    "cycles":cycles,
-    "status": "OK"}
-print(json.dumps(data))  
-
-def calculate_moving_average(values):
-    return sum(values) / len(values)
-
 cycles = 0
 MAX_CYCLES = 1000
 while True:
     # Poll the message queue
-    mqtt_client.loop()
+    try:
+        mqtt_client.loop()
+    except (ValueError, RuntimeError) as e:
+        time.sleep(1)
+        mqtt_client.reconnect()
+        continue
+    
     cycles=cycles + 1
     if cycles > MAX_CYCLES:
-        bme280.sea_level_pressure = get_sea_level()
+        bme280.sea_level_pressure = get_sea_level(requests)
         cycles = 0
         
     pixel[0] = COLOR
@@ -238,7 +250,6 @@ while True:
             "alux": alux,
             "gas" : gas,
             "voc":voc,
-            "cycles":cycles,
             "sea_level_pressure":sea_level_pressure
             },
             {

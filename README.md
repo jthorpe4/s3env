@@ -5,6 +5,7 @@ This is a circuitpython project and requires a ESP32-S3-ETH
 
 also the following libraries from adafruit 
 
+```
 d----          13/02/2025    16:40                adafruit_blinka-8.52.0.dist-info
 d----          13/02/2025    16:40                adafruit_bme280
 d----          13/02/2025    16:40                adafruit_bus_device
@@ -23,3 +24,4 @@ d----          13/02/2025    16:40                adafruit_wiznet5k
 -a---          30/01/2025    05:12            694 adafruit_ticks.mpy
 -a---          30/01/2025    05:12           2967 adafruit_tsl2591.mpy
 -a---          30/01/2025    05:12           1318 neopixel.mpy
+```
