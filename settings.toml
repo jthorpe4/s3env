@@ -1,0 +1,12 @@
+CIRCUITPY_WIFI_SSID = "utel.guest"
+CIRCUITPY_WIFI_PASSWORD = "innovation"
+CIRCUITPY_WEB_API_PASSWORD = "passw0rd"
+CIRCUITPY_WEB_API_PORT = 80
+HIVE_URL = "c72a5ce0456a4230a7a89cf55c4fa080.s1.eu.hivemq.cloud"
+HIVE_PORT = 8883
+HIVE_USERNAME = "utel-mqtt-pico"
+HIVE_PASSWORD = "x3X56ZaA6nvG"
+SEA_LEVEL_CITY = "Hadleigh"
+SEA_LEVEL_URL = "https://wttr.in/{0}?format=%P"
+MQTT_TOPIC = "s3/env"
+LOCATION = "Upstairs"
