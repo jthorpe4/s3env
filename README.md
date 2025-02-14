@@ -1,9 +1,9 @@
-# s3env
-S3 waveshare sensors
+# S3Env
+S3 Waveshare environmental sensors for temperature, humidity, and air quality monitoring
 
-This is a circuitpython project and requires a ESP32-S3-ETH
+This is a CircuitPython project and requires an ESP32-S3-ETH board.
 
-also the following libraries from adafruit 
+Also the following libraries from adafruit 
 
 ```
 d----          13/02/2025    16:40                adafruit_blinka-8.52.0.dist-info
