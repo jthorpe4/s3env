@@ -25,17 +25,22 @@ import adafruit_tsl2591
 import adafruit_ltr390
 import adafruit_sgp40
 import adafruit_icm20x
+import adafruit_logging as logging
 
 def connected(client, userdata, flags, rc):
-    print("connected")
+    print("Connected to MQTT")
     #print("Connected to Adafruit IO! Listening for topic changes on %s" % onoff_feed)
     #client.subscribe(onoff_feed)
 
 def disconnected(client, userdata, rc):
-    print("Disconnected from Adafruit IO!")
+    print("Disconnected from MQTT")
 
 def message(client, topic, message):
     print(f"New message on topic {topic}: {message}")
+
+def publish(client, userdata, topic, pid):
+    # This method is called when the client publishes data to a feed.
+    print('Published to {0} with PID {1}'.format(topic, pid))
 
 def get_sea_level(requests):
     status = "OK"
@@ -68,7 +73,7 @@ def do_burn_in(bme280,sgp ):
     cycles = 0
     while curr_time - start_time < burn_in_time:
         # Poll the message queue
-        mqtt_client.loop()
+        ##mqtt_client.loop()
         curr_time = time.time()
         pixel[0] = COLOR
         time.sleep(DELAY)
@@ -84,6 +89,8 @@ def do_burn_in(bme280,sgp ):
     data = {
         "burn_in_time": burn_in_time,
         "cycles":cycles,
+        "gas": gas,
+        "voc": voc,
         "status": "OK"}
     print(json.dumps(data))  
 
@@ -110,25 +117,40 @@ BURN_IN = os.getenv("BURN_IN")
 
 # Set up a MiniMQTT Client
 pool = socketpool.SocketPool(wifi.radio)
-mqtt_client = MQTT.MQTT(
-    client_id  = client_mac_addr,
-    broker= HIVE_URL,
-    username=HIVE_USERNAME,
-    password=HIVE_PASSWORD,
-    port = HIVE_PORT,
-    socket_pool=pool,
-    is_ssl  = True,
-    ssl_context=ssl.create_default_context()
-)
 
-mqtt_client.on_connect = connected
-mqtt_client.on_disconnect = disconnected
-mqtt_client.on_message = message
-#try:
-mqtt_client.connect()
-#except (ValueError, RuntimeError) as e:
-    #mqtt_client.reconnect()
-    
+   
+def send_mqtt(message):
+    try:
+        mqtt_client = MQTT.MQTT(
+            client_id  = client_mac_addr,
+            broker= HIVE_URL,
+            username=HIVE_USERNAME,
+            password=HIVE_PASSWORD,
+            port = HIVE_PORT,
+            socket_pool=pool,
+            is_ssl  = True,
+            ssl_context=ssl.create_default_context()
+        )
+        mqtt_client.enable_logger(logging, log_level=logging.DEBUG)
+        mqtt_client.on_connect = connected
+        mqtt_client.on_disconnect = disconnected
+        mqtt_client.on_message = message
+        mqtt_client.on_publish = publish
+        #try:
+        mqtt_client.connect()
+        #except (ValueError, RuntimeError) as e:
+        #mqtt_client.reconnect()
+        mqtt_client.loop()
+        mqtt_client.publish(MQTT_TOPIC,message)
+        mqtt_client.disconnect()
+    except (ValueError, RuntimeError) as e:
+        print("error", e)
+    #So we don't throttle our free connection
+    print("Wait 5 seconds")
+    time.sleep(5)
+
+   
+   
 # Circular buffer with a maximum length of 10
 humidity_values = deque([],10)
 temperature_values = deque([],10)
@@ -196,12 +218,12 @@ cycles = 0
 MAX_CYCLES = 1000
 while True:
     # Poll the message queue
-    try:
-        mqtt_client.loop()
-    except (ValueError, RuntimeError) as e:
-        time.sleep(1)
-        mqtt_client.reconnect()
-        continue
+    #try:
+    #    mqtt_client.loop()
+    #except (ValueError, RuntimeError) as e:
+    #    time.sleep(1)
+    #    mqtt_client.reconnect()
+    #    continue
     
     cycles=cycles + 1
     if cycles > MAX_CYCLES:
@@ -234,7 +256,7 @@ while True:
     if not (last_temperature == temperature
             and (abs(humidity - moving_average_humidity)  <= 3.00)
             and last_pressure ==pressure
-            and round(last_dlux,0) == round(dlux,0))  :
+            and (abs(last_dlux - dlux)) <= 50.0)  :
         pixel[0] = BLUE
         gas = sgp.measure_raw(temperature = temperature, relative_humidity = humidity)
         voc= sgp.measure_index(temperature = temperature, relative_humidity = humidity)
@@ -257,13 +279,10 @@ while True:
                 "location": LOCATION
             }
         ]
-            #"humidity_values":list(humidity_values),
-            #"moving_average_humidity":moving_average_humidity,
-            #"temperature_values":list(temperature_values),
-            #"moving_average_temperature":moving_average_temperature
+
         message = json.dumps(data)
-        print(message)  
-        mqtt_client.publish(MQTT_TOPIC,message)
+        print(message)
+        send_mqtt(message)
         last_temperature = temperature
         last_humidity = humidity
         last_pressure = pressure
