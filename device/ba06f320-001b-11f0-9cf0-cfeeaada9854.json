@@ -1,0 +1,102 @@
+{
+  "entityType" : "DEVICE",
+  "entity" : {
+    "additionalInfo" : {
+      "gateway" : false,
+      "overwriteActivityTime" : false,
+      "description" : ""
+    },
+    "customerId" : {
+      "entityType" : "CUSTOMER",
+      "id" : "a1ee0d70-0028-11f0-9cf0-cfeeaada9854"
+    },
+    "deviceData" : {
+      "configuration" : {
+        "type" : "DEFAULT"
+      },
+      "transportConfiguration" : {
+        "type" : "DEFAULT"
+      }
+    },
+    "deviceProfileId" : {
+      "entityType" : "DEVICE_PROFILE",
+      "id" : "7075f120-001b-11f0-9cf0-cfeeaada9854"
+    },
+    "externalId" : null,
+    "firmwareId" : null,
+    "id" : {
+      "entityType" : "DEVICE",
+      "id" : "ba06f320-001b-11f0-9cf0-cfeeaada9854"
+    },
+    "label" : "",
+    "name" : "Office_6",
+    "softwareId" : null,
+    "type" : "default"
+  },
+  "credentials" : {
+    "credentialsId" : "hZz9S1DYVTcWj1IwryLF",
+    "credentialsType" : "ACCESS_TOKEN",
+    "credentialsValue" : null
+  },
+  "relations" : [ ],
+  "attributes" : {
+    "SERVER_SCOPE" : [ {
+      "booleanValue" : true,
+      "doubleValue" : null,
+      "jsonValue" : null,
+      "key" : "active",
+      "lastUpdateTs" : 1741884161326,
+      "longValue" : null,
+      "strValue" : null
+    }, {
+      "booleanValue" : null,
+      "doubleValue" : null,
+      "jsonValue" : null,
+      "key" : "inactivityAlarmTime",
+      "lastUpdateTs" : 1741883889979,
+      "longValue" : 1741883889978,
+      "strValue" : null
+    }, {
+      "booleanValue" : null,
+      "doubleValue" : null,
+      "jsonValue" : null,
+      "key" : "lastActivityTime",
+      "lastUpdateTs" : 1741884302325,
+      "longValue" : 1741884301948,
+      "strValue" : null
+    } ],
+    "SHARED_SCOPE" : [ {
+      "booleanValue" : null,
+      "doubleValue" : null,
+      "jsonValue" : null,
+      "key" : "fw_tag",
+      "lastUpdateTs" : 1741883126593,
+      "longValue" : null,
+      "strValue" : "New version 1.1"
+    }, {
+      "booleanValue" : null,
+      "doubleValue" : null,
+      "jsonValue" : null,
+      "key" : "fw_title",
+      "lastUpdateTs" : 1741883126593,
+      "longValue" : null,
+      "strValue" : "New version"
+    }, {
+      "booleanValue" : null,
+      "doubleValue" : null,
+      "jsonValue" : null,
+      "key" : "fw_url",
+      "lastUpdateTs" : 1741883126593,
+      "longValue" : null,
+      "strValue" : "https://github.com/jthorpe4/s3env"
+    }, {
+      "booleanValue" : null,
+      "doubleValue" : null,
+      "jsonValue" : null,
+      "key" : "fw_version",
+      "lastUpdateTs" : 1741883126593,
+      "longValue" : null,
+      "strValue" : "1.1"
+    } ]
+  }
+}

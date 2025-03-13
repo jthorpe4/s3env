@@ -8,7 +8,10 @@
     "defaultRuleChainId" : null,
     "description" : "Default device profile",
     "externalId" : null,
-    "firmwareId" : null,
+    "firmwareId" : {
+      "entityType" : "OTA_PACKAGE",
+      "id" : "bda950c0-0027-11f0-9cf0-cfeeaada9854"
+    },
     "id" : {
       "entityType" : "DEVICE_PROFILE",
       "id" : "7075f120-001b-11f0-9cf0-cfeeaada9854"
@@ -34,6 +37,7 @@
     "transportType" : "DEFAULT",
     "type" : "DEFAULT"
   },
+  "relations" : [ ],
   "attributes" : {
     "SERVER_SCOPE" : [ ]
   }
