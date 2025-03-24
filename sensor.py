@@ -12,6 +12,7 @@ class Sensor:
         self.DEBUG = os.getenv("DEBUG",False)
         self.HIVE_URL = os.getenv("HIVE_URL")
         self.HIVE_PORT = os.getenv("HIVE_PORT")
+        self.THINGSBOARD_DEVICE_TOKEN =  os.getenv("THINGSBOARD_DEVICE_TOKEN")
      #   self.MQTT_TOPIC = MQTT_TOPIC
         #self.DEBUG = DEBUG
         #self.HIVE_URL = HIVE_URL
@@ -58,7 +59,7 @@ class Sensor:
             mqtt_client = MQTT.MQTT(
               #  client_id  = client_mac_addr,
                 broker= self.HIVE_URL,
-                username="5tao4yz84tf0buo5ivir",
+                username=self.THINGSBOARD_DEVICE_TOKEN,
                 password="",
                 port = self.HIVE_PORT,
                 socket_pool=pool,
@@ -83,4 +84,5 @@ class Sensor:
         #print("Wait 5 seconds")
         time.sleep(5)
         
+
 
